@@ -26,17 +26,22 @@ public:
     }
     void show_10(int cpm, int count, double uS_h) {
         char buffer[80];
-        sprintf(buffer, "CPM %d %d %.6f\n", cpm, count, uS_h);
-        tft.clear();
+        sprintf(buffer, "10 CPM %d %d %.6f\n", cpm, count, uS_h);
+        tft.setColor(BLACK);
+        tft.fillRect(0, 0, 128, 10);
+        tft.setColor(WHITE);
         tft.drawString(0, 0, buffer);
         tft.display();
     }
 
-    void show_360(int cpm, int count, double uS_h) {
+    void show_60(int cpm, int count, double uS_h) {
         char buffer[80];
-        sprintf(buffer, "CPM %d %d %.6f\n", cpm, count, uS_h);
-        tft.clear();
-        tft.drawString(12, 0, buffer);
+        sprintf(buffer, "60 CPM %d %d %.6f\n", cpm, count, uS_h);
+        tft.setColor(BLACK);
+        tft.fillRect(0, 12, 128, 10);
+        tft.setColor(WHITE);
+        tft.drawString(0, 12, buffer);
+        tft.display();
     }
 
     void    output(int cpm, int period, int count, double uS_h) {
@@ -44,8 +49,8 @@ public:
         case 10:
             show_10(cpm, count, uS_h);
             break;
-        case 360:
-            show_360(cpm, count, uS_h);
+        case 60:
+            show_60(cpm, count, uS_h);
             break;
        }
     }

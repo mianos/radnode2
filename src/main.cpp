@@ -51,6 +51,29 @@ void noise_event() {
 
 Display display;
 
+struct Dbc {
+    int bc = 0;
+    int last_bc = -1;
+    unsigned long last_bc_time = 0;
+    bool action() {
+        if (bc && bc != last_bc) {
+            if (last_bc_time && (last_bc_time + 300 > millis())) {
+                last_bc = bc;
+                return false;
+            } else {
+                last_bc_time = millis();
+            }
+            last_bc = bc;
+            return true;
+        }
+        return false;
+    }
+} dbc;
+
+void button_event() {
+    dbc.bc++;
+}
+
 void setup() {
   Serial.begin(9600); //9600bps
 
@@ -58,8 +81,10 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(signPin), count_event, FALLING);
   pinMode(noisePin,INPUT_PULLUP); //PIN setting for Noise Pulse
   attachInterrupt(digitalPinToInterrupt(noisePin), noise_event, RISING);
-  pinMode(beepPin, OUTPUT); //PIN setting for Noise Pulse
+  pinMode(beepPin, OUTPUT); 
   digitalWrite(beepPin, HIGH);
+  pinMode(0, INPUT_PULLUP); // PRG button
+  attachInterrupt(digitalPinToInterrupt(0), button_event, FALLING);
   strip.Begin();
   strip.Show();
   display.begin();
@@ -70,18 +95,21 @@ Rcs rs60s  =  Rcs(60, 6);
 Rcs rs60mins = Rcs(360, 60);
 
 void loop() {
-  if (events && !events_acked) {
-    strip.SetPixelColor(0, RgbColor(0, 30, 0));
-    strip.Show();
-    events = 0;
-    events_acked = true;
-  }
-  if (beep_end && millis() > beep_end) {
-    digitalWrite(beepPin, HIGH);
-    strip.SetPixelColor(0, RgbColor(0, 0, 0));
-    strip.Show();
-    beep_end = 0;
-  }
+    if (dbc.action()) {
+        printf("Change page\n");
+    }
+    if (events && !events_acked) {
+        strip.SetPixelColor(0, RgbColor(0, 30, 0));
+        strip.Show();
+        events = 0;
+        events_acked = true;
+    }
+    if (beep_end && millis() > beep_end) {
+        digitalWrite(beepPin, HIGH);
+        strip.SetPixelColor(0, RgbColor(0, 0, 0));
+        strip.Show();
+        beep_end = 0;
+    }
     static unsigned  last = 0;
     int now_millis = millis();
     int since = now_millis - last;
@@ -93,7 +121,7 @@ void loop() {
             last = now_millis;
             display.output(rcl * 6, 10, rcl, (float)rcl * 6 / alpha);
             double rs60 = rs60s.add(rcl);
-            //output(rs60 * 6, 60, rcl, (float)rs60  * 6 / alpha);
+            display.output(rs60 * 6, 60, rcl, (float)rs60  * 6 / alpha);
 			int32_t remapped[rs60s.len];
 			int out_size = rs60s.scale(remapped, 16);
 			//tgraph(remapped, out_size, 15, 6, 2);
