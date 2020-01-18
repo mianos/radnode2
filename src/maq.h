@@ -26,7 +26,7 @@ struct Rcs {
         return r_avg;
     }
 #if 1
-    void display() {
+    void display() const {
         int i;
         if (vq->isEmpty()) {
             printf(" \n Empty Queue\n");
@@ -40,7 +40,7 @@ struct Rcs {
         }
     }
 #endif
-	int scale(int *output, int new_max) {
+	int scale(int *output, int new_max) const {
         int ii;
 		int32_t old_max = 0;
 		for (ii = vq->front; ; ii = (ii + 1) % vq->size) {

@@ -12,9 +12,6 @@ const int signPin = 2; // 2 36Radiation Pulse (Yellow)
 const int noisePin = 23; // 5; //Vibration Noise Pulse (White)
 const int beepPin = 22; // 3;
 
-const double alpha = 53.032; // cpm = uSv x alpha
-// const double CONV_FACTOR = 1.0 / alpha;
-// // #define CONV_FACTOR 0.00812
 
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
@@ -91,12 +88,10 @@ void setup() {
 }
 
 int count_10s = 0;
-Rcs rs60s  =  Rcs(60, 6);
-Rcs rs60mins = Rcs(360, 60);
 
 void loop() {
     if (dbc.action()) {
-        printf("Change page\n");
+        display.next_page();
     }
     if (events && !events_acked) {
         strip.SetPixelColor(0, RgbColor(0, 30, 0));
@@ -119,21 +114,11 @@ void loop() {
             int rcl = rad_count;
             rad_count -= rcl;
             last = now_millis;
-            display.output(rcl * 6, 10, rcl, (float)rcl * 6 / alpha);
-            double rs60 = rs60s.add(rcl);
-            display.output(rs60 * 6, 60, rcl, (float)rs60  * 6 / alpha);
-			int32_t remapped[rs60s.len];
-			int out_size = rs60s.scale(remapped, 16);
-			//tgraph(remapped, out_size, 15, 6, 2);
-           rs60s.vq->display();
+            periods.rs60s.add(rcl);
             if (!(++count_10s % 6)) {
-               double rs60min = rs60mins.add(rs60s.running_sum);
-               // output(rs60min, 360, rcl, (float)rs60min / alpha);
-    		   int32_t rem60[rs60mins.len];
-    		   int out_size = rs60mins.scale(rem60, 16);
-               rs60mins.vq->display();
-			   // tgraph(rem60, out_size, 16, 60, 1, 18, 0);
+               periods.rs60mins.add(periods.rs60s.running_sum);
             }
+            display.display(rcl, periods);
         } else {
             // greater than 8, less than 10, don't do anything below in case it takes too long
             return;
