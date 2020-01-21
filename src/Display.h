@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SSD1306.h"
+#include <TFT_eSPI.h>
 
 #include "Periods.h"
 
@@ -9,18 +9,20 @@ const double alpha = 53.032; // cpm = uSv x alpha
 // // #define CONV_FACTOR 0.00812
 
 
-#define OLED_I2C_ADDR 0x3C
-#define OLED_RESET 16
-#define OLED_SDA 4
-#define OLED_SCL 15
-
 const int pages = 2;
 
 class Display {
-    SSD1306 tft;
+    TFT_eSPI tft;
     int page;
 public:
-    Display() : tft(OLED_I2C_ADDR, OLED_SDA, OLED_SCL) {
+    Display() : tft(135, 240) {
+        tft.init();
+        tft.setRotation(1);
+        tft.fillScreen(TFT_BLACK);
+        tft.setTextSize(2);
+        tft.setTextColor(TFT_WHITE);
+        tft.setCursor(0, 0);
+        tft.setTextDatum(MC_DATUM);
     }
 
     int decimals(double val) {
@@ -36,16 +38,14 @@ public:
     }
 
     void tgraph(int32_t *values, int vsize, int height, int max_size, int bwidth=3, int off_x=0, int off_y=0) {
-        tft.setColor(BLACK);
-        tft.fillRect(off_x, off_y, max_size * bwidth, height);
-        tft.setColor(WHITE);
-        tft.drawRect(off_x, off_y, max_size * bwidth, height);
+        tft.fillRect(off_x, off_y, max_size * bwidth, height, TFT_BLACK);
+        tft.drawRect(off_x, off_y, max_size * bwidth, height, TFT_WHITE);
 #if 1
         int current_x = 0;
         for (int ii = 0; ii < vsize; ii++) {
             // tft.fillRect(current_x, 0, (current_x + 1) * bwidth, values[ii], WHITE);
             if (values[ii]) {
-                tft.fillRect(current_x + off_x + 1, height - values[ii] + off_y - 1, bwidth, values[ii]);
+                tft.fillRect(current_x + off_x + 1, height - values[ii] + off_y - 1, bwidth, values[ii], TFT_WHITE);
                 // printf("Out %d val %d\n", ii, values[ii]);
             } 
             current_x += bwidth;
@@ -73,7 +73,6 @@ public:
                 gheight /* height */, 60 /* max_size */, 1 /* line width */, 20 /* off_x */, 40 /* off_y */);
 
 #endif
-        tft.display();
 
     }
     void next_page() {
@@ -83,38 +82,36 @@ public:
         printf("Change page to %d\n", page);
     }
     void begin() {
-        pinMode(OLED_RESET,OUTPUT);
-        digitalWrite(OLED_RESET, LOW);
-        delay(50);
-        digitalWrite(OLED_RESET, HIGH);
         tft.init();
 //        tft.flipScreenVertically();
-        tft.setFont(ArialMT_Plain_16);
+//        tft.setFont(ArialMT_Plain_16);
     }
     int psym(int y, int x, const char *text) {
-        tft.setFont(ArialMT_Plain_10);
-        tft.drawString(y, x, text);
-        int width = tft.getStringWidth(text);
-        tft.setFont(ArialMT_Plain_16);
-        return width;
+        tft.setTextColor(TFT_WHITE);
+        tft.setTextFont(10);
+        tft.setCursor(y, x);
+        tft.print(text);
+//        int width = tft.getStringWidth(text);
+//        tft.setFont(ArialMT_Plain_16);
+        return 40;
     }
     void show_tline(int cpm, int count, double uS_h, int row) {
         char buffer[80];
-        tft.setColor(BLACK);
-        tft.fillRect(0, row, 128, row +18);
-        tft.setColor(WHITE);
+        tft.fillRect(0, row, 128, row + 18, TFT_BLACK);
+        tft.setTextColor(TFT_WHITE);
         sprintf(buffer, "%5.*f", decimals(uS_h), uS_h);
         int us_width = 40; // uS/h is right hand justfied
-        tft.setTextAlignment(TEXT_ALIGN_RIGHT);
-        tft.drawString(us_width, row, buffer);
-        tft.setTextAlignment(TEXT_ALIGN_LEFT);
-        us_width += psym(us_width, row, "uS/h");
-        us_width += 2;
-        sprintf(buffer, "%d", cpm);
-        tft.drawString(us_width, row, buffer);
-        us_width += tft.getStringWidth(buffer);
-        if (cpm < 100000) {
+        //tft.setTextAlignment(TEXT_ALIGN_RIGHT);
+        tft.setCursor(30, row);
+        tft.print(buffer);
+        //tft.setTextAlignment(TEXT_ALIGN_LEFT);
+        //us_width += psym(us_width, row, "uS/h");
+        //us_width += 2;
+        //sprintf(buffer, "%d", cpm);
+        //tft.drawString(us_width, row, buffer);
+        //us_width += tft.getStringWidth(buffer);
+        //if (cpm < 100000) {
             us_width += psym(us_width, row, "cpm");
-        }
+       // }
     }
 };

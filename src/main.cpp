@@ -5,6 +5,7 @@
 #include <esp_wifi.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <Button2.h>
 
 #define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
 // SSID and PW for Config Portal
@@ -29,17 +30,26 @@ String Router_Pass;
 #include "maq.h"
 #include "Display.h"
 
-const int PixelPin = 17;
 const int PixelCount = 4;
 
-const int signPin = 2; // 2 36Radiation Pulse (Yellow)
-const int noisePin = 23; // 5; //Vibration Noise Pulse (White)
-const int beepPin = 22; // 3;
+const int signPin = 25;
+const int noisePin = 33; //17;
+const int beepPin = 27; 
+const int PixelPin = 26;
 
+const int noise_hold_time = 200;    // 200mS
 
 MiniNtp *mntp;
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+
+#define ADC_EN          14
+#define ADC_PIN         34
+#define BUTTON_1        35
+#define BUTTON_2        0
+
+Button2 btn1(BUTTON_1);
+Button2 btn2(BUTTON_2);
 
 int rad_count = 0;
 int held = 0;
@@ -56,7 +66,6 @@ void count_event() {
     return;
   } 
   rad_count++;
-//  int sign = digitalRead(signPin);
   digitalWrite(beepPin, LOW);
   beep_end = ev_at + 5;
   events++;
@@ -67,34 +76,11 @@ void count_event() {
 int nc = 0;
 
 void noise_event() {
-  noise_hold_until = millis() + 100;
+  noise_hold_until = millis() + noise_hold_time;
   nc++;
 }
 
 Display display;
-
-struct Dbc {
-    int bc = 0;
-    int last_bc = -1;
-    unsigned long last_bc_time = 0;
-    bool action() {
-        if (bc && bc != last_bc) {
-            if (last_bc_time && (last_bc_time + 300 > millis())) {
-                last_bc = bc;
-                return false;
-            } else {
-                last_bc_time = millis();
-            }
-            last_bc = bc;
-            return true;
-        }
-        return false;
-    }
-} dbc;
-
-void button_event() {
-    dbc.bc++;
-}
 
 // Number of seconds after reset during which a 
 // subseqent reset will be considered a double reset.
@@ -109,6 +95,7 @@ bool initialConfig = false;
 DoubleResetDetector* drd;
 
 void setup_wifi() {
+    strip.SetPixelColor(1, RgbColor(50, 0, 0));	// RED led 1 config
   drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   //Local intialization. Once its business is done, there is no need to keep it around
   // Use this to default DHCP hostname to ESP8266-XXXXXX or ESP32-XXXXXX
@@ -148,7 +135,6 @@ void setup_wifi() {
   
   if (initialConfig) {
     printf("%s\n", "Starting configuration portal.");
-	strip.SetPixelColor(1, RgbColor(255, 0, 0));	// RED led 1 config
 
     //sets timeout in seconds until configuration portal gets turned off.
     //If not specified device will remain in configuration mode until
@@ -163,7 +149,7 @@ void setup_wifi() {
       printf("%s\n", "WiFi connected...yeey :)");    
   }
 
-	strip.SetPixelColor(1, RgbColor(0, 255, 0));
+	strip.SetPixelColor(1, RgbColor(0, 10, 0));
 
 #define WIFI_CONNECT_TIMEOUT        30000L
 #define WHILE_LOOP_DELAY            200L
@@ -213,17 +199,15 @@ void setup() {
 	attachInterrupt(digitalPinToInterrupt(noisePin), noise_event, RISING);
 	pinMode(beepPin, OUTPUT); 
 	digitalWrite(beepPin, HIGH);
-	pinMode(0, INPUT_PULLUP); // PRG button
-	attachInterrupt(digitalPinToInterrupt(0), button_event, FALLING);
 	display.begin();
+    btn1.setPressedHandler([](Button2& bb) {
+        display.next_page();
+    });
 }
 
 int count_10s = 0;
 
 void loop() {
-    if (dbc.action()) {
-        display.next_page();
-    }
     if (events && !events_acked) {
         strip.SetPixelColor(0, RgbColor(0, 30, 0));
         strip.Show();
@@ -250,6 +234,7 @@ void loop() {
                periods.rs60mins.add(periods.rs60s.running_sum);
             }
             display.display(rcl, periods);
+            printf("nc %d\n", nc);
         } else {
             // greater than 8, less than 10, don't do anything below in case it takes too long
             return;
@@ -257,4 +242,6 @@ void loop() {
     }
 	drd->loop();
 	mntp->run();
+    btn1.loop();
+    btn1.loop();
 }
