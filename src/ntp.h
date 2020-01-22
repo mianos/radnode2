@@ -167,7 +167,6 @@ public:
                 if (adjustment > 0) {
                     drift_age++;
                     if (drift_age > adjust_threshold) {
-                        printf(" =============== subtract\n");
                         drift_sign = 0;
                         drift_age = 0;
                         middle++;
@@ -179,7 +178,6 @@ public:
                 } else if (adjustment < 0) {
                     drift_age++;
                     if (drift_age > adjust_threshold) {
-                        printf(" ========== add\n");
                         drift_sign = 0;
                         drift_age = 0;
                         middle--;

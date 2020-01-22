@@ -10,12 +10,14 @@ const double alpha = 53.032; // cpm = uSv x alpha
 
 
 const int pages = 2;
+const int tft_width = TFT_HEIGHT;
+const int tft_height = TFT_WIDTH;
 
 class Display {
     TFT_eSPI tft;
     int page;
 public:
-    Display() : tft(135, 240) {
+    Display() : tft(tft_height, tft_width) {
         tft.init();
         tft.setRotation(1);
         tft.fillScreen(TFT_BLACK);
@@ -26,7 +28,9 @@ public:
     }
 
     int decimals(double val) {
-        if (val > 99.9) {
+        if (val == 0) {
+            return 0;
+        } else if (val > 99.9) {
             return 0;
         } else if (val > .99) {
             return 1;
@@ -57,9 +61,9 @@ public:
 #if 1
         show_tline(rcl * 6, rcl, (float)rcl * 6 / alpha, 0);
         auto rs60_avg = periods.rs60s.r_avg;
-        show_tline(rs60_avg * 6, rcl, (float)rs60_avg * 6 / alpha, 16);
+        show_tline(rs60_avg * 6, rcl, (float)rs60_avg * 6 / alpha, 1);
 #endif
-#if 1
+#if 0
         const int gheight = 16;
         int32_t remapped[periods.rs60s.len];
         int out_size = periods.rs60s.scale(remapped, gheight - 2);
@@ -86,32 +90,42 @@ public:
 //        tft.flipScreenVertically();
 //        tft.setFont(ArialMT_Plain_16);
     }
-    int psym(int y, int x, const char *text) {
+    int psym(int x, int y, const char *text) {
         tft.setTextColor(TFT_WHITE);
-        tft.setTextFont(10);
-        tft.setCursor(y, x);
-        tft.print(text);
-//        int width = tft.getStringWidth(text);
-//        tft.setFont(ArialMT_Plain_16);
-        return 40;
+        tft.setTextFont(1);
+        tft.drawString(text, x, y);
+        int width = tft.textWidth(text);
+        tft.setTextFont(2);
+        return width;
     }
     void show_tline(int cpm, int count, double uS_h, int row) {
         char buffer[80];
-        tft.fillRect(0, row, 128, row + 18, TFT_BLACK);
-        tft.setTextColor(TFT_WHITE);
+        tft.setTextFont(2);
+
+        auto font_height = tft.fontHeight();
+        auto y_pos = row * font_height;
+        tft.fillRect(0, y_pos, tft_width, font_height, TFT_BLUE);
+#if 1
         sprintf(buffer, "%5.*f", decimals(uS_h), uS_h);
-        int us_width = 40; // uS/h is right hand justfied
-        //tft.setTextAlignment(TEXT_ALIGN_RIGHT);
-        tft.setCursor(30, row);
-        tft.print(buffer);
-        //tft.setTextAlignment(TEXT_ALIGN_LEFT);
-        //us_width += psym(us_width, row, "uS/h");
-        //us_width += 2;
-        //sprintf(buffer, "%d", cpm);
-        //tft.drawString(us_width, row, buffer);
-        //us_width += tft.getStringWidth(buffer);
-        //if (cpm < 100000) {
-            us_width += psym(us_width, row, "cpm");
-       // }
+        printf("usv %f\n", uS_h);
+        auto us_width =  tft.textWidth("000.0"); // uS/h is right hand justfied
+        tft.setTextColor(TFT_WHITE, TFT_RED);
+        tft.setTextDatum(TR_DATUM);
+        tft.drawString(buffer, us_width, y_pos);
+        tft.setTextDatum(TL_DATUM);
+        us_width += 2;
+
+        us_width += psym(us_width, y_pos,  "uSv/h");
+
+        sprintf(buffer, "%d", cpm);
+        printf("cpm %d\n", cpm);
+        tft.drawString(buffer, us_width, y_pos);
+        us_width += tft.textWidth(buffer);
+        us_width += 2;
+
+        if (cpm < 10000) {
+            psym(us_width, y_pos,  "cpm");
+       }
+#endif
     }
 };
