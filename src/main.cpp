@@ -80,7 +80,7 @@ void noise_event() {
   nc++;
 }
 
-Display display;
+Display *display;
 
 // Number of seconds after reset during which a 
 // subseqent reset will be considered a double reset.
@@ -188,6 +188,10 @@ void setup_wifi() {
 
 void setup() {
 	Serial.begin(9600); //9600bps
+    if (!SPIFFS.begin()) {
+        printf("SPIFFS initialisation failed!");
+        while (1) yield(); // Stay here twiddling thumbs waiting
+    }
 	strip.Begin();
 	strip.Show();
 	setup_wifi();
@@ -199,9 +203,9 @@ void setup() {
 	attachInterrupt(digitalPinToInterrupt(noisePin), noise_event, RISING);
 	pinMode(beepPin, OUTPUT); 
 	digitalWrite(beepPin, HIGH);
-	display.begin();
+	display = new Display();
     btn1.setPressedHandler([](Button2& bb) {
-        display.next_page();
+        display->next_page(periods);
     });
 }
 
@@ -230,10 +234,11 @@ void loop() {
             rad_count -= rcl;
             last = now_millis;
             periods.rs60s.add(rcl);
+
             if (!(++count_10s % 6)) {
                periods.rs60mins.add(periods.rs60s.running_sum);
             }
-            display.display(rcl, periods);
+            display->display(periods);
         } else {
             // greater than 8, less than 10, don't do anything below in case it takes too long
             return;

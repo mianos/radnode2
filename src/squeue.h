@@ -42,7 +42,12 @@ struct SQueue {
         used++;
         return 1;
     }
-
+    uint32_t recent() {
+        if (front == -1) {
+            return UINT_MAX;
+        }
+        return items[rear];
+    }
     uint32_t deQueue() {
         int element;
         if (isEmpty()) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <TFT_eSPI.h>
+#include "Free_Fonts.h" 
 
 #include "Periods.h"
 
@@ -13,13 +14,15 @@ const int pages = 2;
 const int tft_width = TFT_HEIGHT;
 const int tft_height = TFT_WIDTH;
 
+
 class Display {
     TFT_eSPI tft;
-    int page;
+    int page = 0;
 public:
     Display() : tft(tft_height, tft_width) {
         tft.init();
         tft.setRotation(1);
+
         tft.fillScreen(TFT_BLACK);
         tft.setTextSize(2);
         tft.setTextColor(TFT_WHITE);
@@ -57,11 +60,15 @@ public:
 #endif
     }
 
-    void display(int rcl, Periods& periods) {
+    void display(Periods& periods) {
 #if 1
-        show_tline(rcl * 6, rcl, (float)rcl * 6 / alpha, 0);
-        auto rs60_avg = periods.rs60s.r_avg;
-        show_tline(rs60_avg * 6, rcl, (float)rs60_avg * 6 / alpha, 1);
+        if (page == 0) {
+            auto projected_60s_count = periods.rs60s.recent() * 6;
+            show_tline(projected_60s_count, (float)projected_60s_count / alpha, 1);
+        } else {
+            auto rs60_avg = periods.rs60s.r_avg;
+            show_tline(rs60_avg * 6, (float)rs60_avg * 6 / alpha, 1);
+        }
 #endif
 #if 0
         const int gheight = 16;
@@ -79,35 +86,31 @@ public:
 #endif
 
     }
-    void next_page() {
+    void next_page(Periods &periods) {
         if (++page == pages) {
             page = 0;
         }
         printf("Change page to %d\n", page);
+        display(periods);
     }
-    void begin() {
-        tft.init();
-//        tft.flipScreenVertically();
-//        tft.setFont(ArialMT_Plain_16);
-    }
+    
     int psym(int x, int y, const char *text) {
         tft.setTextColor(TFT_WHITE);
-        tft.setTextFont(1);
+        tft.setFreeFont(TT1);
         tft.drawString(text, x, y);
         int width = tft.textWidth(text);
-        tft.setTextFont(2);
         return width;
     }
-    void show_tline(int cpm, int count, double uS_h, int row) {
+    void show_tline(int cpm, double uS_h, int row) {
         char buffer[80];
-        tft.setTextFont(2);
 
+        tft.setFreeFont(FSS9);    
         auto font_height = tft.fontHeight();
         auto y_pos = row * font_height;
         tft.fillRect(0, y_pos, tft_width, font_height, TFT_BLUE);
-#if 1
         sprintf(buffer, "%5.*f", decimals(uS_h), uS_h);
         printf("usv %f\n", uS_h);
+
         auto us_width =  tft.textWidth("000.0"); // uS/h is right hand justfied
         tft.setTextColor(TFT_WHITE, TFT_RED);
         tft.setTextDatum(TR_DATUM);
@@ -119,6 +122,7 @@ public:
 
         sprintf(buffer, "%d", cpm);
         printf("cpm %d\n", cpm);
+        tft.setFreeFont(FSS9);    
         tft.drawString(buffer, us_width, y_pos);
         us_width += tft.textWidth(buffer);
         us_width += 2;
@@ -126,6 +130,5 @@ public:
         if (cpm < 10000) {
             psym(us_width, y_pos,  "cpm");
        }
-#endif
     }
 };

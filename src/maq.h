@@ -6,12 +6,15 @@
 
 struct Rcs {
     int period;
-    uint32_t running_sum;
+    uint32_t running_sum = 0;
     SQueue *vq;
-    double r_avg;
-    int len;
-    Rcs(int period, int size) : period(period), running_sum(0), r_avg(0.0), len(0) {
+    double r_avg = 0.0;
+    int len = 0;
+    Rcs(int period, int size) : period(period)  {
         vq = new SQueue(size);
+    }
+    uint32_t recent() {
+        return vq->recent();
     }
     double add(uint32_t ll) {
         if (vq->isFull()) {
