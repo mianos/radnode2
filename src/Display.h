@@ -1,9 +1,11 @@
 #pragma once
 
 #include <TFT_eSPI.h>
+
 #include "Free_Fonts.h" 
 
 #include "Periods.h"
+#include "DeltaText.h"
 
 const double alpha = 53.032; // cpm = uSv x alpha
 // const double CONV_FACTOR = 1.0 / alpha;
@@ -14,20 +16,28 @@ const int pages = 2;
 const int tft_width = TFT_HEIGHT;
 const int tft_height = TFT_WIDTH;
 
-
 class Display {
     TFT_eSPI tft;
     int page = 0;
+    MiniNtp *mntp;
+    DeltaText dtx;
 public:
-    Display() : tft(tft_height, tft_width) {
+    Display(MiniNtp *mntp) : tft(tft_height, tft_width), mntp(mntp), dtx(tft, "--:--:--", 120, 0, 4) {
         tft.init();
         tft.setRotation(1);
-
         tft.fillScreen(TFT_BLACK);
-        tft.setTextSize(2);
-        tft.setTextColor(TFT_WHITE);
-        tft.setCursor(0, 0);
-        tft.setTextDatum(MC_DATUM);
+
+        dtx.Refresh();
+    }
+
+    void display_time() {
+        if (mntp->is_good()) {
+            char buffer[40];
+            auto nn = mntp->now();
+            nn.local(buffer, sizeof (buffer), 10, true);
+            buffer[8] = 0;
+            dtx.Draw(buffer);
+        }
     }
 
     int decimals(double val) {
@@ -61,27 +71,30 @@ public:
     }
 
     void display(Periods& periods) {
+
 #if 1
         if (page == 0) {
+            show_page_title("10S");
             auto projected_60s_count = periods.rs60s.recent() * 6;
             show_tline(projected_60s_count, (float)projected_60s_count / alpha, 1);
         } else {
+            show_page_title("60S");
             auto rs60_avg = periods.rs60s.r_avg;
             show_tline(rs60_avg * 6, (float)rs60_avg * 6 / alpha, 1);
         }
 #endif
-#if 0
-        const int gheight = 16;
+#if 1
+        const int gheight = 32;
         int32_t remapped[periods.rs60s.len];
         int out_size = periods.rs60s.scale(remapped, gheight - 2);
         tgraph(remapped, out_size,
-                gheight /* height */, 6 /* max_size */, 2 /* line width */, 0 /* off_x */, 40 /* off_y */);
+                gheight /* height */, 6 /* max_size */, 16 /* line width */, 0 /* off_x */, 70 /* off_y */);
 
 
-        int32_t minrem[periods.rs60mins.len];
-        out_size = periods.rs60mins.scale(minrem, gheight - 2);
-        tgraph(minrem, out_size,
-                gheight /* height */, 60 /* max_size */, 1 /* line width */, 20 /* off_x */, 40 /* off_y */);
+//        int32_t minrem[periods.rs60mins.len];
+//        out_size = periods.rs60mins.scale(minrem, gheight - 2);
+//        tgraph(minrem, out_size,
+//                gheight /* height */, 60 /* max_size */, 1 /* line width */, 20 /* off_x */, 70 /* off_y */);
 
 #endif
 
@@ -101,19 +114,27 @@ public:
         int width = tft.textWidth(text);
         return width;
     }
+    void show_page_title(const char *title) {
+        tft.setTextFont(4);    
+        tft.setTextColor(TFT_WHITE, TFT_RED);
+        tft.setTextDatum(TL_DATUM);
+        auto width = tft.textWidth("M");
+        tft.setTextPadding(width);
+        tft.drawString(title, 0, 0);
+    }
     void show_tline(int cpm, double uS_h, int row) {
         char buffer[80];
 
-        tft.setFreeFont(FSS9);    
+        tft.setTextFont(4);    
+        auto width = tft.textWidth("M");
         auto font_height = tft.fontHeight();
         auto y_pos = row * font_height;
-        tft.fillRect(0, y_pos, tft_width, font_height, TFT_BLUE);
         sprintf(buffer, "%5.*f", decimals(uS_h), uS_h);
-        printf("usv %f\n", uS_h);
 
         auto us_width =  tft.textWidth("000.0"); // uS/h is right hand justfied
         tft.setTextColor(TFT_WHITE, TFT_RED);
         tft.setTextDatum(TR_DATUM);
+        tft.setTextPadding(width);
         tft.drawString(buffer, us_width, y_pos);
         tft.setTextDatum(TL_DATUM);
         us_width += 2;
@@ -121,8 +142,9 @@ public:
         us_width += psym(us_width, y_pos,  "uSv/h");
 
         sprintf(buffer, "%d", cpm);
-        printf("cpm %d\n", cpm);
-        tft.setFreeFont(FSS9);    
+        tft.setTextFont(4);    
+        tft.setTextColor(TFT_WHITE, TFT_RED);
+        tft.setTextPadding(width);
         tft.drawString(buffer, us_width, y_pos);
         us_width += tft.textWidth(buffer);
         us_width += 2;

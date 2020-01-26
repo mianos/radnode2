@@ -188,6 +188,9 @@ void setup_wifi() {
 
 void setup() {
 	Serial.begin(9600); //9600bps
+    // TODO: get this from the config file
+    setenv("TZ", "AEST-10AEDT,M10.1.0,M4.1.0/3", 1);
+    tzset();
     if (!SPIFFS.begin()) {
         printf("SPIFFS initialisation failed!");
         while (1) yield(); // Stay here twiddling thumbs waiting
@@ -203,7 +206,7 @@ void setup() {
 	attachInterrupt(digitalPinToInterrupt(noisePin), noise_event, RISING);
 	pinMode(beepPin, OUTPUT); 
 	digitalWrite(beepPin, HIGH);
-	display = new Display();
+	display = new Display(mntp);
     btn1.setPressedHandler([](Button2& bb) {
         display->next_page(periods);
     });
@@ -227,6 +230,8 @@ void loop() {
     static unsigned  last = 0;
     int now_millis = millis();
     int since = now_millis - last;
+    display->display_time();
+
     if (since > 8000) {
         if (since > 10000) {
             /* get the current count and subtract how much we are logging from it so we can put a mutex around this */
