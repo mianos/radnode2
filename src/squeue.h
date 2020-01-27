@@ -14,6 +14,7 @@ struct SQueue {
 
     SQueue(int size_i) : size(size_i) {
         items = new uint32_t[size];
+        memset(items, 0, sizeof (uint32_t) * size);
     }
     ~SQueue() {
         delete []items;
