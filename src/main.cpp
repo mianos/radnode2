@@ -5,7 +5,9 @@
 #include <esp_wifi.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <PubSubClient.h>
 #include <Button2.h>
+#include <ArduinoJson.h>
 
 #define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
 // SSID and PW for Config Portal
@@ -93,6 +95,9 @@ bool initialConfig = false;
 
 //DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
 DoubleResetDetector* drd;
+
+WiFiClient espClient;
+PubSubClient mqtt_client(espClient);
 
 void setup_wifi() {
     strip.SetPixelColor(1, RgbColor(50, 0, 0));	// RED led 1 config

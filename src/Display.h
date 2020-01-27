@@ -92,7 +92,7 @@ public:
             int out_size = periods.rs60mins.scale(minrem, gheight - 2);
             tft.fillRect(0, 70, tft_width, gheight, TFT_BLACK);
             tgraph(minrem, out_size,
-                    gheight /* height */, 60 /* max_size */, 4 /* line width */, 0 /* off_x */, 70 /* off_y */);
+                    gheight /* height */, 60 /* max_size */, 3 /* line width */, 0 /* off_x */, 70 /* off_y */);
         }
 
     }
