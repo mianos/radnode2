@@ -81,6 +81,7 @@ public:
             show_tline(projected_60s_count, (float)projected_60s_count / alpha, 1);
             int32_t remapped[periods.rs60s.len];
             int out_size = periods.rs60s.scale(remapped, gheight - 2);
+            tft.fillRect(0, 70, tft_width, gheight, TFT_BLACK);
             tgraph(remapped, out_size,
                     gheight /* height */, 6 /* max_size */, 16 /* line width */, 0 /* off_x */, 70 /* off_y */);
         } else {
@@ -89,8 +90,9 @@ public:
             show_tline(rs60_avg * 6, (float)rs60_avg * 6 / alpha, 1);
             int32_t minrem[periods.rs60mins.len];
             int out_size = periods.rs60mins.scale(minrem, gheight - 2);
+            tft.fillRect(0, 70, tft_width, gheight, TFT_BLACK);
             tgraph(minrem, out_size,
-                    gheight /* height */, 60 /* max_size */, 1 /* line width */, 20 /* off_x */, 70 /* off_y */);
+                    gheight /* height */, 60 /* max_size */, 4 /* line width */, 0 /* off_x */, 70 /* off_y */);
         }
 
     }
@@ -98,7 +100,6 @@ public:
         if (++page == pages) {
             page = 0;
         }
-        printf("Change page to %d\n", page);
         display(periods);
     }
     
