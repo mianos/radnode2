@@ -4,10 +4,7 @@
 
 #include <esp_wifi.h>
 #include <WiFi.h>
-#include <WiFiClient.h>
-#include <PubSubClient.h>
 #include <Button2.h>
-#include <ArduinoJson.h>
 
 #define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
 // SSID and PW for Config Portal
@@ -27,6 +24,7 @@ String Router_Pass;
 
 #include "SecMilli.h"
 #include "ntp.h"
+#include "Sender.h"
 
 
 #include "maq.h"
@@ -83,7 +81,7 @@ void noise_event() {
 }
 
 Display *display;
-
+Sender *sender;
 // Number of seconds after reset during which a 
 // subseqent reset will be considered a double reset.
 #define DRD_TIMEOUT 10
@@ -96,8 +94,6 @@ bool initialConfig = false;
 //DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
 DoubleResetDetector* drd;
 
-WiFiClient espClient;
-PubSubClient mqtt_client(espClient);
 
 void setup_wifi() {
     strip.SetPixelColor(1, RgbColor(50, 0, 0));	// RED led 1 config
@@ -215,6 +211,7 @@ void setup() {
     btn1.setPressedHandler([](Button2& bb) {
         display->next_page(periods);
     });
+    sender = new Sender();
 }
 
 int count_10s = 0;
@@ -258,4 +255,5 @@ void loop() {
 	mntp->run();
     btn1.loop();
     btn1.loop();
+    sender->loop();
 }
