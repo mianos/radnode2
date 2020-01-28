@@ -61,9 +61,9 @@ struct SecMilli {
         struct tm timeinfo;
         time_t tt_secs = secs_;
         gmtime_r(&tt_secs, &timeinfo);
-        snprintf(buffer, buffer_len, "%04d-%02d-%02dT%02d:%02d:%02d.%lu",
+        snprintf(buffer, buffer_len, "%04d-%02d-%02dT%02d:%02d:%02d.%luZ",
                  timeinfo.tm_year + 1900,
-                 timeinfo.tm_mon,
+                 timeinfo.tm_mon + 1,
                  timeinfo.tm_mday,
                  timeinfo.tm_hour,
                  timeinfo.tm_min,

@@ -7,9 +7,8 @@
 #include "Periods.h"
 #include "DeltaText.h"
 
-const double alpha = 53.032; // cpm = uSv x alpha
-// const double CONV_FACTOR = 1.0 / alpha;
-// // #define CONV_FACTOR 0.00812
+#include "hwinfo.h"
+
 
 
 const int pages = 2;

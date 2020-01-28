@@ -5,6 +5,9 @@
 #include <ArduinoJson.h>
 
 #include "ntp.h"
+#include "Periods.h"
+
+#include "hwinfo.h"
 
 const char* mqtt_server = "mqtt2.mianos.com";
 
@@ -28,17 +31,23 @@ public:
         client.publish((const char *)(mqtt_base + topic).c_str(), (const char *)data.as<String>().c_str());
     }
 
-    void    PublishStatus(const char * status) {
+    void    PublishStatus(const char *status) {
         StaticJsonDocument<100> json_state;
         json_state["status"] = status;
         PubJson(json_state);
     }
 
-    void    PublishRadValue(MiniNtp *mntp) {
+    void    PublishRadValue(MiniNtp *mntp, Periods& periods) {
         char buffer[40];
         auto nn = mntp->now();
         nn.as_iso(buffer, sizeof (buffer));
-        printf("'%s'\n", buffer);
+        auto rs60_avg = periods.rs60s.r_avg;
+        auto us_h = (float)rs60_avg * 6 / alpha;
+        StaticJsonDocument<200> js;
+        js["datetime"] = buffer;
+        js["cpm"] = static_cast<int>(rs60_avg * 6);
+        js["ush"] = us_h;
+        PubJson(js);
     }
 
     void callback(char* topic, byte* payload, unsigned int length) {

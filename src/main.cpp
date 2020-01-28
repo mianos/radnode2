@@ -246,9 +246,9 @@ void loop() {
 
             if (!(++count_10s % 6)) {
                periods.rs60mins.add(periods.rs60s.running_sum);
+               sender->PublishRadValue(mntp, periods);
             }
             display->display(periods);
-            sender->PublishRadValue(mntp);
         } else {
             // greater than 8, less than 10, don't do anything below in case it takes too long
             return;
