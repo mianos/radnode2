@@ -75,16 +75,16 @@ struct SecMilli {
         struct tm timeinfo;
         time_t tt_secs = secs_;
         localtime_r(&tt_secs, &timeinfo);
-        snprintf(buffer, buffer_len, "%02d:%02d:%02d.%lu",
+        snprintf(buffer, buffer_len, "%2d:%02d:%02d.%lu",
                  timeinfo.tm_hour % 12,
                  timeinfo.tm_min,
                  timeinfo.tm_sec,
                  millis_);
         return buffer;
     }
-    char *local(char *buffer, int buffer_len, int hours_offset, bool dst) const {
+    char *gmtime(char *buffer, int buffer_len) const {
         struct tm timeinfo;
-        time_t tt_secs = secs_ + 3600 * hours_offset + (dst ? 3600 : 0);
+        time_t tt_secs = secs_;
         gmtime_r(&tt_secs, &timeinfo);
         snprintf(buffer, buffer_len, "%02d:%02d:%02d.%lu",
                  timeinfo.tm_hour,

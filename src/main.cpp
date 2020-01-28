@@ -211,7 +211,9 @@ void setup() {
     btn1.setPressedHandler([](Button2& bb) {
         display->next_page(periods);
     });
-    sender = new Sender();
+    sender = new Sender([]() {
+            printf("---------------- connected");
+            });
 }
 
 int count_10s = 0;
@@ -246,6 +248,7 @@ void loop() {
                periods.rs60mins.add(periods.rs60s.running_sum);
             }
             display->display(periods);
+            sender->PublishRadValue(mntp);
         } else {
             // greater than 8, less than 10, don't do anything below in case it takes too long
             return;

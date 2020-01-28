@@ -39,7 +39,7 @@ struct DeltaText {
         for (int ii = 0; ii < len; ii++) {
             if (text[ii] != pre_value[ii]) {
                 pre_value[ii] = text[ii];
-                tft.fillRect(base_x + width * ii, base_y, width, 16, TFT_BLUE);
+                tft.fillRect(base_x + width * ii, base_y, width, 16, TFT_BLACK);
                 tft.drawChar(text[ii], base_x + width * ii, base_y);
                 drawn++;
             }

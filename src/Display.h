@@ -37,7 +37,7 @@ public:
         if (mntp->is_good()) {
             char buffer[40];
             auto nn = mntp->now();
-            nn.local(buffer, sizeof (buffer), 10, true);
+            nn.local(buffer, sizeof (buffer));
             buffer[8] = 0;
             dtx.Draw(buffer);
         }
